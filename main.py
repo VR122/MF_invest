@@ -17,15 +17,16 @@ message = "Alert for investment"
 try:
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "Reminder for MF Investment"
-    msg['From'] = mail_ID
+    msg['From'] = "Mokok"
     msg['To'] = receiver
     body_html = "<p> Alert for Investment </p>"
     msg_body = MIMEText(body_html, 'html')
     msg.attach(msg_body)
-    # mail_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-    # mail_server.login(mail_ID,pwd)
-    # mail_server.sendmail(mail_ID, receiver, message)
+    mail_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    mail_server.login(mail_ID,pwd)
+    mail_server.sendmail(mail_ID, receiver,msg.as_string())
 except Exception as e:
     print(e)
-# finally:
-#     mail_server.close()
+finally:
+    mail_server.close()
+    print("Exit")
