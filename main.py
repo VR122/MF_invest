@@ -28,6 +28,7 @@ def send_mail(data):
         mail_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         mail_server.login(mail_ID,pwd)
         mail_server.sendmail(mail_ID, receiver,msg.as_string())
+        print()
     except Exception as e:
         print(e)
     finally:
