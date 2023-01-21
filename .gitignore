@@ -1,3 +1,4 @@
 .env
 BP.txt
 password_SMTP
+*.bat

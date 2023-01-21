@@ -22,7 +22,7 @@ def send_mail(data):
         msg['Subject'] = "Reminder for MF Investment"
         msg['From'] = "Reminder_MF"
         msg['To'] = "You"
-        body_html = "<p> Alert for Investment \r\n {data}</p>".format(data=data)
+        body_html = "<p> Alert for Investment <br> Total amount to be invested = {data}</p>".format(data=data)
         msg_body = MIMEText(body_html, 'html')
         msg.attach(msg_body)
         mail_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
@@ -45,12 +45,14 @@ def read_mail():
     mail.select("inbox")
     _, searched_data = mail.search(None,'ALL') #All represnts read and unread mails 
     Transaction_list = []
+    amount = 0
     for searched in searched_data[0].split():
         data_to_return ={}
         _, mail_data = mail.fetch(searched,"(RFC822)")
         _, data = mail_data[0]
         message = email.message_from_bytes(data)
-        if str(message["Date"][5:16]) == datetime.date.today().strftime("%d %b %Y") and message["Subject"] == Subject:
+        yesterday = datetime.date.today() - datetime.timedelta(days = 1)
+        if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
             headers = ["From","To","Date","Subject"]
             for header in headers:
                 data_to_return[header] = message[header]
@@ -58,8 +60,13 @@ def read_mail():
             for msg in message.walk():
                 if msg.get_content_type() == "text/plain":
                     data_to_return["Body"] = msg.get_payload(decode=False)
-            Transaction_list.append(data_to_return["Body"])
+                    if "declined" not in data_to_return["Body"]:
+                        a = data_to_return["Body"].split("INR")[1].split("on")[0].strip()
+                    
+                        amount = amount+float(a)
+                    
+            Transaction_list.append(data_to_return["Body"])  
     mail.close()
     mail.logout()
-    send_mail(Transaction_list)
+    send_mail(amount)
 read_mail()
