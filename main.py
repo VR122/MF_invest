@@ -7,8 +7,8 @@ import ssl
 from pathlib import Path
 import os
 
-mail_server = "smtp.gmail.com"
-port = 587
+# mail_server = "smtp.gmail.com"
+# port = 587
 mail_ID = os.environ.get("Email_ID")
 pwd = os.environ.get("Python_Pass")
 receiver = os.environ.get("Receiver")
@@ -30,4 +30,4 @@ except Exception as e:
     print(e)
 finally:
     mail_server.close()
-    print("Exit")
+    print("End of execution!")
