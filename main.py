@@ -13,8 +13,8 @@ import datetime
 
 imap_server = "imap.gmail.com"
 imap_port = 993
-mail_ID = os.environ.get("Email_ID")
-pwd = os.environ.get("Python_Pass")
+mail_ID = os.environ.get("Email")
+pwd = os.environ.get("MF_AP")
 receiver = os.environ.get("Receiver")
 def send_mail(data):    
     try:
@@ -43,7 +43,7 @@ def read_mail():
     mail.login(mail_ID,pwd)
     Subject = "Transaction alert for your ICICI Bank Credit Card"
     mail.select("inbox")
-    _, searched_data = mail.search(None,'ALL') #All represnts read and unread mails 
+    _, searched_data = mail.search(None,'UNSEEN') #All represnts read and unread mails 
     Transaction_list = []
     amount = 0
     for searched in searched_data[0].split():
