@@ -6,8 +6,9 @@ import os
 import imaplib
 import email
 import datetime
+import time
 
-
+start =time.time()
 imap_server = "imap.gmail.com"
 imap_port = 993
 mail_ID = os.environ.get("Email")
@@ -40,15 +41,15 @@ def read_mail():
     mail.login(mail_ID,pwd)
     Subject = "Transaction alert for your ICICI Bank Credit Card"
     mail.select("inbox")
-    _, searched_data = mail.search(None,'UNSEEN') #All represnts read and unread mails 
-    Transaction_list = []
+    yesterday = datetime.date.today() - datetime.timedelta(days = 1)
+    criteria = yesterday.strftime("%d-%b-%Y")
+    _, searched_data = mail.search(None,'(FROM "credit_cards@icicibank.com" SUBJECT "Transaction alert for your ICICI Bank Credit Card" (SINCE "{}")'.format(criteria)) #All represnts read and unread mails 
     amount = 0
     for searched in searched_data[0].split():
         data_to_return ={}
         _, mail_data = mail.fetch(searched,"(RFC822)")
         _, data = mail_data[0]
         message = email.message_from_bytes(data)
-        yesterday = datetime.date.today() - datetime.timedelta(days = 1)
         if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
             headers = ["From","To","Date","Subject"]
             for header in headers:
@@ -61,9 +62,10 @@ def read_mail():
                         a = data_to_return["Body"].split("INR")[1].split("on")[0].strip()
                     
                         amount = amount+float(a)
-                    
-            Transaction_list.append(data_to_return["Body"])  
+                     
     mail.close()
     mail.logout()
-    send_mail(amount)
+    # send_mail(amount)
 read_mail()
+end = time.time()
+print(start-end)
