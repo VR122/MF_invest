@@ -43,8 +43,8 @@ def read_mail():
     mail.select("inbox")
     yesterday = datetime.date.today() - datetime.timedelta(days = 1)
     day_bef = datetime.date.today() - datetime.timedelta(days = 2)
-    criteria = day_bef.strftime("%d-%b-%Y")
-    _, searched_data = mail.search(None,'UNSEEN') 
+    criteria = yesterday.strftime("%d-%b-%Y")
+    _, searched_data = mail.search(None,'(FROM "credit_cards@icicibank.com" SUBJECT "Transaction alert for your ICICI Bank Credit Card" SINCE "{}")'.format(criteria)) 
     
     amount = 0
     for searched in searched_data[0].split():
@@ -53,7 +53,7 @@ def read_mail():
         _, data = mail_data[0]
         message = email.message_from_bytes(data)
         
-        if str(message["Date"][5:16]) == day_bef.strftime("%d %b %Y") and message["Subject"] == Subject:
+        if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
             headers = ["From","To","Date","Subject"]
             for header in headers:
                 data_to_return[header] = message[header]
