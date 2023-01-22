@@ -7,6 +7,7 @@ import imaplib
 import email
 import datetime
 import time
+import logging
 
 start =time.time()
 imap_server = "imap.gmail.com"
@@ -32,7 +33,7 @@ def send_mail(data):
         mail_server.close()
         print("End of execution!")
 
-
+amount = 0
 
 
 def read_mail():
@@ -46,7 +47,7 @@ def read_mail():
     criteria = yesterday.strftime("%d-%b-%Y")
     _, searched_data = mail.search(None,'(FROM "credit_cards@icicibank.com" SUBJECT "Transaction alert for your ICICI Bank Credit Card" SINCE "{}")'.format(criteria)) 
     
-    amount = 0
+    
     for searched in searched_data[0].split():
         data_to_return ={}
         _, mail_data = mail.fetch(searched,"(RFC822)")
@@ -61,15 +62,20 @@ def read_mail():
             for msg in message.walk():
                 if msg.get_content_type() == "text/html":
                     data_to_return["Body"] = msg.get_payload(decode=False)
+                    logging.info(f"Body = {data_to_return}")
                     
                     if "declined" not in data_to_return["Body"]:
                         a = data_to_return["Body"].split("INR")[1].split("on")[0].strip()
                         amount = amount+float(a)
-                        
+                        logging.info(f"Amount = {amount}")
     send_mail(amount)                 
     mail.close()
     mail.logout()
-    
+logging.basicConfig(level=logging.INFO, filename="log.log",filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
+logging.debug("debug")
+logging.info(f"Amount = {amount}")
+logging.error("error")
+logging.critical("crit")
 read_mail()
 end = time.time()
 print(start-end)
