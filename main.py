@@ -1,6 +1,6 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
+# from email.mime.base import MIMEBase
 import smtplib
 import os
 import imaplib
@@ -28,12 +28,13 @@ def send_mail(data):
         mail_server.login(mail_ID,pwd)
         mail_server.sendmail(mail_ID, os.environ.get("Receiver"),msg.as_string())
     except Exception as e:
-        print(e)
+        logging.error("Error in send_mail(data).")
     finally:
         mail_server.close()
-        print("End of execution!")
+        logging.info("End of execution")
 
-amount = 0
+
+
 
 
 def read_mail():
@@ -46,7 +47,7 @@ def read_mail():
     day_bef = datetime.date.today() - datetime.timedelta(days = 2)
     criteria = yesterday.strftime("%d-%b-%Y")
     _, searched_data = mail.search(None,'(FROM "credit_cards@icicibank.com" SUBJECT "Transaction alert for your ICICI Bank Credit Card" SINCE "{}")'.format(criteria)) 
-    
+    amount = 0
     
     for searched in searched_data[0].split():
         data_to_return ={}
@@ -54,10 +55,12 @@ def read_mail():
         _, data = mail_data[0]
         message = email.message_from_bytes(data)
         
+        
         if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
             headers = ["From","To","Date","Subject"]
             for header in headers:
                 data_to_return[header] = message[header]
+            logging.info(data_to_return)
             
             for msg in message.walk():
                 if msg.get_content_type() == "text/html":
@@ -68,14 +71,16 @@ def read_mail():
                         a = data_to_return["Body"].split("INR")[1].split("on")[0].strip()
                         amount = amount+float(a)
                         logging.info(f"Amount = {amount}")
+                    else:
+                        logging.info(f"Declined mail(s) found.")
+    logging.info(f"Amount ={amount}")
     send_mail(amount)                 
     mail.close()
     mail.logout()
 logging.basicConfig(level=logging.INFO, filename="log.log",filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
-logging.debug("debug")
-logging.info(f"Amount = {amount}")
-logging.error("error")
-logging.critical("crit")
+# logging.debug("debug")
+# logging.error("error")
+# logging.critical("crit")
 read_mail()
 end = time.time()
-print(start-end)
+logging.info(f"Time taken ={start-end}")
