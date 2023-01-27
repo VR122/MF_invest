@@ -1,6 +1,5 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-# from email.mime.base import MIMEBase
 import smtplib
 import os
 import imaplib
@@ -8,13 +7,28 @@ import email
 import datetime
 import time
 import logging
+import mysql.connector
 
 start =time.time()
 imap_server = "imap.gmail.com"
-imap_port = 993
+
+# getting credentials from environment varibales
 mail_ID = os.environ.get("Email")
 pwd = os.environ.get("MF_AP")
 receiver = os.environ.get("Receiver")
+
+# initiating connection to database
+mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="root",
+        database="my_expenses"
+    )
+cursor = mydb.cursor()
+
+
+
+# Method to send the e-mail
 def send_mail(data):    
     try:
         msg = MIMEMultipart('alternative')
@@ -36,9 +50,9 @@ def send_mail(data):
 
 
 
-
+# Method to read the mail
 def read_mail():
-    #connecting to gmail server
+    # connecting to gmail server
     mail = imaplib.IMAP4_SSL(imap_server)
     mail.login(mail_ID,pwd)
     Subject = "Transaction alert for your ICICI Bank Credit Card"
@@ -57,30 +71,50 @@ def read_mail():
         
         
         if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
+            # the below code is not needed till logging.info(data_to_return)
             headers = ["From","To","Date","Subject"]
             for header in headers:
                 data_to_return[header] = message[header]
             logging.info(data_to_return)
+
             
             for msg in message.walk():
                 if msg.get_content_type() == "text/html":
                     data_to_return["Body"] = msg.get_payload(decode=False)
-                    logging.info(f"Body = {data_to_return}")
                     
+
                     if "declined" not in data_to_return["Body"]:
                         a = data_to_return["Body"].split("INR")[1].split("on")[0].strip()
-                        amount = amount+float(a)
-                        logging.info(f"Amount = {amount}")
+                        try:
+                            a = float(a)
+                        except ValueError:
+                            a = a.replace(',', '')
+                            a = float(a)
+                        amount = amount + a
+                        spent_on = data_to_return["Body"].split("Info:")[1].split(".")[0]
+                        logging.info(f"Amount = {a}")
+                        logging.info(f"Money spent on = {spent_on}")
+                        cursor.execute(f"INSERT INTO expense_spent (amount,spent_on) VALUES ('{a}','{spent_on}')")
+
+                        date_from_mail = data_to_return["Date"]
+                        date_object = datetime.datetime.strptime(date_from_mail, '%a, %d %b %Y %H:%M:%S %z')
+                        formatted_date = date_object.strftime("%Y-%m-%d")
+                        logging.info(f"Formatted date: {formatted_date}")
+
+                        cursor.execute(f"INSERT INTO expenses (date,amount,spent_on) VALUES ('{formatted_date}','{amount}','{spent_on}')")
                     else:
                         logging.info(f"Declined mail(s) found.")
+
+
+    date_today = datetime.date.today()
+    cursor.execute(f"INSERT INTO expense_2 (date,Amount) VALUES ('{date_today}',{amount})")
+    mydb.commit()
     logging.info(f"Amount ={amount}")
     send_mail(amount)                 
     mail.close()
     mail.logout()
 logging.basicConfig(level=logging.INFO, filename="log.log",filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
-# logging.debug("debug")
-# logging.error("error")
-# logging.critical("crit")
+
 read_mail()
 end = time.time()
 logging.info(f"Time taken ={start-end}")
