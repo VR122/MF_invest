@@ -21,7 +21,7 @@ receiver = os.environ.get("Receiver")
 mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="root",
+        password=os.environ.get("DB_pass"),
         database="my_expenses"
     )
 cursor = mydb.cursor()
@@ -71,7 +71,7 @@ def read_mail():
         
         
         if str(message["Date"][5:16]) == yesterday.strftime("%d %b %Y") and message["Subject"] == Subject:
-            # the below code is not needed till logging.info(data_to_return)
+            # the below code is not needed till logging.info(data_to_return) but we can use it to keep track of amount spent on different dates.
             headers = ["From","To","Date","Subject"]
             for header in headers:
                 data_to_return[header] = message[header]
